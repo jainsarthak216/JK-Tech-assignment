@@ -29,6 +29,20 @@ docker-compose up --build
 
 App will be available at: `http://localhost:3000`
 
+### 4. Run Prisma migrations inside Docker
+After containers are up:
+
+```bash
+docker-compose run --rm prisma migrate dev --name init
+```
+This will apply the database schema to your Postgres instance.
+
+If needed, generate Prisma client:
+
+```bash
+docker-compose run --rm prisma generate
+```
+
 ## 🔐 Authentication
 Use `/auth/register` and `/auth/login` to get JWT tokens. Include the token in headers:
 ```http
