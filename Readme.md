@@ -13,7 +13,7 @@ This project is a modular, testable, and Dockerized NestJS backend for user auth
 
 ### 1. Clone the repository
 ```bash
-git clone [JK-Tech-assignment](https://github.com/jainsarthak216/JK-Tech-assignment)
+git clone https://github.com/jainsarthak216/JK-Tech-assignment
 cd nestjs-backend
 ```
 
