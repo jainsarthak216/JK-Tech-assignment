@@ -27,6 +27,18 @@ services:
       - .:/app
       - /app/node_modules
 
+  prisma:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://nestuser:nestpass@postgres:5432/nestdb
+    entrypoint: ["npx", "prisma"]
+
+
 volumes:
   pgdata:
     driver: local
