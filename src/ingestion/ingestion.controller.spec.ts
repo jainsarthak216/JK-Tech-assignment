@@ -4,26 +4,29 @@ import { IngestionController } from './ingestion.controller';
 import { IngestionService } from './ingestion.service';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
 
-// Bypass auth guard for unit test
+const mockIngestionService = {
+  triggerIngestion: jest.fn(() => ({ id: 'ing-1', status: 'in_progress' })),
+  getStatus: jest.fn((id) => ({ id, status: 'completed' })),
+};
 const mockAuthGuard = {
   canActivate: () => true,
 };
 
 describe('IngestionController', () => {
   let controller: IngestionController;
-  let service: IngestionService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [IngestionController],
-      providers: [IngestionService],
+      providers: [
+        { provide: IngestionService, useValue: mockIngestionService },
+      ],
     })
       .overrideProvider(JwtAuthGuard)
       .useValue(mockAuthGuard)
       .compile();
 
     controller = module.get<IngestionController>(IngestionController);
-    service = module.get<IngestionService>(IngestionService);
   });
 
   it('should trigger ingestion and return status', () => {
@@ -33,7 +36,7 @@ describe('IngestionController', () => {
   });
 
   it('should return ingestion status by ID', async () => {
-    const { id } = await service.triggerIngestion();
+    const { id } = mockIngestionService.triggerIngestion();
     const status = await controller.getIngestionStatus(id);
     expect(status.id).toBe(id);
   });

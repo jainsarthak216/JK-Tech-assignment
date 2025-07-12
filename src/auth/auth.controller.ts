@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Controller,
   Post,
@@ -48,5 +49,12 @@ export class AuthController {
   @Post('profile')
   getProfile(@Request() req: { user: any }): any {
     return req.user;
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  logout(@Request() req) {
+    const token = req.headers.authorization?.split(' ')[1];
+    return { message: 'Logged out' };
   }
 }

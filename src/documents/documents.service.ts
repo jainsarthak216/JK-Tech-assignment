@@ -38,4 +38,23 @@ export class DocumentsService {
     const doc = await this.findOne(id);
     return doc.ingestionId ?? '';
   }
+
+  async update(id: string, file: Express.Multer.File): Promise<Document> {
+    const doc = await this.findOne(id);
+    if (!doc) throw new NotFoundException('Document not found');
+    return this.prisma.document.update({
+      where: { id },
+      data: {
+        filename: file.filename,
+        originalName: file.originalname,
+      },
+    });
+  }
+
+  async delete(id: string): Promise<{ message: string }> {
+    const doc = await this.findOne(id);
+    if (!doc) throw new NotFoundException('Document not found');
+    await this.prisma.document.delete({ where: { id } });
+    return { message: 'Document deleted successfully' };
+  }
 }
