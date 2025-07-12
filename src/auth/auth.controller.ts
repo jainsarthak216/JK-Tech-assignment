@@ -17,7 +17,11 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() body: RegisterDto): Promise<{ access_token: string }> {
-    const user = await this.authService.register(body.email, body.password);
+    const user = await this.authService.register(
+      body.email,
+      body.password,
+      body.role,
+    );
     return {
       access_token: await this.authService['jwtService'].signAsync({
         email: user.email,

@@ -14,7 +14,8 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   backend:
-    build: .
+    build:
+      context: .
     restart: always
     ports:
       - '3000:3000'
