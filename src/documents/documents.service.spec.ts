@@ -1,12 +1,11 @@
 import { DocumentsService } from './documents.service';
-import { IngestionService } from '../ingestion/ingestion.service';
 import { NotFoundException } from '@nestjs/common';
 
 interface Doc {
   id: string;
   originalName: string;
   filename: string;
-  ingestionId: string;
+  ingestionId?: string;
 }
 
 const mockDocDb: Doc[] = [];
@@ -79,6 +78,22 @@ describe('DocumentsService', () => {
     expect(doc.ingestionId).toBeDefined();
   });
 
+  it('should throw NotFoundException if document is deleted before update', async () => {
+    const doc = await documentsService.create(mockFile);
+    await documentsService.delete(doc.id);
+    await expect(documentsService.update(doc.id, mockFile)).rejects.toThrow(
+      'Document not found',
+    );
+  });
+
+  it('should throw NotFoundException if document is deleted before delete', async () => {
+    const doc = await documentsService.create(mockFile);
+    await documentsService.delete(doc.id);
+    await expect(documentsService.delete(doc.id)).rejects.toThrow(
+      'Document not found',
+    );
+  });
+
   it('should find a document by ID', async () => {
     const doc = await documentsService.create(mockFile);
     const found = await documentsService.findOne(doc.id);
@@ -99,14 +114,19 @@ describe('DocumentsService', () => {
     expect(ingestionId).toBe(doc.ingestionId);
   });
 
-  it('should return empty string if ingestionId missing', async () => {
+  it('should return empty string if ingestionId is missing or undefined', async () => {
     const doc = mockPrismaService.document.create({
-      data: { originalName: 'noingest.pdf', filename: 'file-999.pdf' },
+      data: {
+        originalName: 'noingest.pdf',
+        filename: 'file-999.pdf',
+        ingestionId: undefined,
+      },
     });
+    delete doc.ingestionId;
     const ingestionId = await documentsService.getIngestionIdByDocumentId(
       doc.id,
     );
-    expect(ingestionId).toBe('ing-1');
+    expect(ingestionId).toBe('');
   });
 
   it('should find all documents', async () => {
@@ -123,10 +143,10 @@ describe('DocumentsService', () => {
     expect(updated.filename).toBe('file-123.pdf');
   });
 
-  it('should throw if update called with invalid id', async () => {
+  it('should throw NotFoundException if update called with invalid id', async () => {
     await expect(
       documentsService.update('not-found', mockFile),
-    ).rejects.toThrow(NotFoundException);
+    ).rejects.toThrow('Document not found');
   });
 
   it('should delete a document', async () => {
@@ -138,9 +158,25 @@ describe('DocumentsService', () => {
     );
   });
 
-  it('should throw if delete called with invalid id', async () => {
+  it('should throw NotFoundException if delete called with invalid id', async () => {
     await expect(documentsService.delete('not-found')).rejects.toThrow(
-      NotFoundException,
+      'Document not found',
+    );
+  });
+
+  it('should throw NotFoundException if document is deleted before update', async () => {
+    const doc = await documentsService.create(mockFile);
+    await documentsService.delete(doc.id);
+    await expect(documentsService.update(doc.id, mockFile)).rejects.toThrow(
+      'Document not found',
+    );
+  });
+
+  it('should throw NotFoundException if document is deleted before delete', async () => {
+    const doc = await documentsService.create(mockFile);
+    await documentsService.delete(doc.id);
+    await expect(documentsService.delete(doc.id)).rejects.toThrow(
+      'Document not found',
     );
   });
 });

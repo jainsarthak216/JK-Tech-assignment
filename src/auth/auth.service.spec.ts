@@ -40,6 +40,12 @@ describe('AuthService', () => {
     expect(result).toHaveProperty('role', 'viewer');
   });
 
+  it('should register user with default role if not provided', async () => {
+    const result = await service.register('defaultrole@example.com', '1234');
+    expect(result).toHaveProperty('email', 'defaultrole@example.com');
+    expect(result).toHaveProperty('role', 'viewer');
+  });
+
   it('should login valid user', async () => {
     await service.register('test@example.com', '1234', 'viewer');
     const user = await service.validateUser('test@example.com', '1234');
