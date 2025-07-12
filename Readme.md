@@ -1,64 +1,75 @@
 # 📚 NestJS Document Ingestion API
 
-A modular, testable, and Dockerized backend built with **NestJS**, **Prisma ORM**, and **PostgreSQL**. It supports:
+A backend service built using **NestJS**, **Prisma**, and **PostgreSQL**, supporting:
 
-- ✅ JWT-based authentication with role management (admin, editor, viewer)  
-- ✅ Document upload and retrieval  
-- ✅ Ingestion workflows and status tracking  
+- JWT-based authentication and role-based access
+- Document upload and ingestion tracking
+- Prisma ORM for database access
+- Dockerized local development
 
 ---
 
 ## 🛠 Tech Stack
 
-- **NestJS** – Progressive Node.js framework  
-- **Prisma ORM** – Type-safe database access  
-- **PostgreSQL** – Dockerized relational database  
-- **Docker + Docker Compose** – Containerized development  
+- **NestJS** – Node.js framework  
+- **Prisma** – ORM for PostgreSQL  
+- **PostgreSQL** – Database  
+- **Docker & Docker Compose** – Containerized setup
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Setup)
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/jainsarthak216/JK-Tech-assignment
 cd nestjs-backend
-```
+````
+
+---
 
 ### 2. Set Up Environment Variables
 
-Copy the example env and configure:
+Copy the example file:
 
 ```bash
 cp .env.example .env
 ```
 
-Update `.env` with your own values:
+Update `.env` with:
 
 ```ini
 DATABASE_URL=postgresql://nestuser:nestpass@postgres:5432/nestdb
 JWT_SECRET=your_jwt_secret_key
 ```
 
-### 3. Run with Docker Compose
+---
+
+### 3. Start the Application
+
+Run the containers:
 
 ```bash
 docker-compose up --build
 ```
 
-This will start:
-- API on [http://localhost:3000](http://localhost:3000)
-- PostgreSQL on localhost:5432
+The services will start on:
 
-### 4. Apply Prisma Migrations
+* API → [http://localhost:3000](http://localhost:3000)
+* PostgreSQL → port 5432
 
-Run inside container:
+---
+
+### 4. Migrate Database & Generate Prisma Client
+
+Apply database schema:
 
 ```bash
 docker-compose run --rm prisma migrate dev --name init
 ```
 
-To generate the Prisma client (when schema changes):
+(Optional) Re-generate Prisma client after schema changes:
 
 ```bash
 docker-compose run --rm prisma generate
@@ -68,21 +79,43 @@ docker-compose run --rm prisma generate
 
 ## 🔐 Authentication
 
-Use the following routes:
+### Register
 
-- `POST /auth/register` – Register new user
-- `POST /auth/login` – Login and receive JWT
+```http
+POST /auth/register
+Content-Type: application/json
 
-Login returns a JWT token. Use it in headers for protected routes:
+{
+  "email": "admin@example.com",
+  "password": "strongpass",
+  "role": "admin"
+}
+```
+
+### Login
+
+```http
+POST /auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "strongpass"
+}
+```
+
+Returns:
+
+```json
+{
+  "access_token": "JWT_TOKEN"
+}
+```
+
+Use the token in headers for protected routes:
 
 ```
-Authorization: Bearer <your_jwt_token>
-```
-
-Protect endpoints in code with:
-
-```typescript
-@UseGuards(JwtAuthGuard, RolesGuard)
+Authorization: Bearer JWT_TOKEN
 ```
 
 ---
@@ -90,41 +123,32 @@ Protect endpoints in code with:
 ## 📄 API Endpoints
 
 ### Auth
-- `POST /auth/register`
-- `POST /auth/login`
 
-### Users (Admin Only)
-- `GET /users`
-- `PATCH /users/:id/role`
+* `POST /auth/register`
+* `POST /auth/login`
+
+### Users (Admin)
+
+* `GET /users`
+* `PATCH /users/:id/role`
 
 ### Documents
-- `POST /documents/upload`
-- `GET /documents`
-- `GET /documents/:id`
-- `GET /documents/:id/ingestion-status`
+
+* `POST /documents/upload` (multipart/form-data)
+* `GET /documents`
+* `GET /documents/:id`
+* `GET /documents/:id/ingestion-status`
 
 ### Ingestion
-- `POST /ingestion/trigger`
-- `GET /ingestion/status/:id`
+
+* `POST /ingestion/trigger`
+* `GET /ingestion/status/:id`
 
 ---
 
-## 📁 Project Structure
+## 🧪 Testing
 
-```
-src/
-├── auth/         # Auth & JWT
-├── documents/    # File/document handling
-├── ingestion/    # Ingestion workflow logic
-├── prisma/       # Prisma client & schema
-└── users/        # User and role management
-```
-
----
-
-## 🧪 Running Tests
-
-Run unit tests for services and controllers:
+Run all unit tests:
 
 ```bash
 npm run test
@@ -132,26 +156,43 @@ npm run test
 
 ---
 
-## 🐘 Debugging Database
+## 🐘 Accessing the Database
 
-Access PostgreSQL CLI:
+Enter PostgreSQL shell:
 
 ```bash
 docker exec -it nestjs-backend-postgres-1 psql -U nestuser -d nestdb
 ```
 
-View tables:
+View tables or query data:
 
 ```sql
 \dt
 SELECT * FROM "User";
 SELECT * FROM "Document";
+SELECT * FROM "Ingestion";
 ```
 
-Optionally, run Prisma Studio:
+(Optional) Visual DB browser:
 
 ```bash
 docker-compose run --rm prisma studio
+```
+
+Open: [http://localhost:5555](http://localhost:5555)
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── auth/         # JWT & login logic
+├── documents/    # Upload + ingestion
+├── ingestion/    # Ingestion workflow
+├── prisma/       # Prisma schema & client
+├── users/        # User & role logic
+└── main.ts       # App entrypoint
 ```
 
 ---
