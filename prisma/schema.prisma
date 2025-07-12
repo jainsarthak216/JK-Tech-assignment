@@ -15,19 +15,19 @@ model User {
   createdAt DateTime @default(now())
 }
 
-model Ingestion {
-  id          String     @id @default(uuid())
-  status      String
-  startedAt   DateTime
-  completedAt DateTime?  // optional
-  documents   Document[] // relation back to documents
-}
-
 model Document {
-  id           String     @id @default(uuid())
+  id           String   @id @default(uuid())
   originalName String
   filename     String
+  uploadedAt   DateTime @default(now())
   ingestionId  String
-  ingestion    Ingestion  @relation(fields: [ingestionId], references: [id])
-  createdAt    DateTime   @default(now())
+  ingestion    Ingestion @relation(fields: [ingestionId], references: [id])
+}
+
+model Ingestion {
+  id          String    @id @default(uuid())
+  status      String
+  startedAt   DateTime
+  completedAt DateTime?
+  documents   Document[]
 }

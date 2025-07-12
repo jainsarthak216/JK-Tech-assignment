@@ -16,18 +16,29 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() body: RegisterDto) {
-    return this.authService.register(body);
+  async register(@Body() body: RegisterDto): Promise<{ access_token: string }> {
+    console.log('Registering user:', body);
+    const user = await this.authService.register(body.email, body.password);
+    return {
+      access_token: await this.authService['jwtService'].signAsync({
+        email: user.email,
+        sub: user.id,
+        role: user.role,
+      }),
+    };
   }
 
   @Post('login')
   async login(@Body() body: LoginDto): Promise<{ access_token: string }> {
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    return this.authService.login({
-      email: user.email,
-      password: body.password,
-    });
+    return {
+      access_token: await this.authService['jwtService'].signAsync({
+        email: user.email,
+        sub: user.id,
+        role: user.role,
+      }),
+    };
   }
 
   @UseGuards(JwtAuthGuard)

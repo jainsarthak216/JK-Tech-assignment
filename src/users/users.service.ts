@@ -1,5 +1,8 @@
+/* eslint-disable */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
+import { PrismaService } from '../../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 export interface User {
   id: string;
@@ -10,31 +13,32 @@ export interface User {
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(userDto: Partial<User>): User {
-    const user: User = {
-      id: uuid(),
-      email: userDto.email!,
-      password: userDto.password!,
-      role: userDto.role || 'viewer',
-    };
-    this.users.push(user);
-    return user;
+  async create(userDto: { email: string; password: string; role?: string }) {
+    const hashedPassword = await bcrypt.hash(userDto.password, 10);
+    return this.prisma.user.create({
+      data: {
+        email: userDto.email,
+        password: hashedPassword,
+        role: userDto.role ?? 'viewer',
+      },
+    });
   }
 
-  findByEmail(email: string): User | undefined {
-    return this.users.find((user) => user.email === email);
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
   }
 
-  findAll(): User[] {
-    return this.users;
+  async findAll() {
+    return this.prisma.user.findMany({
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
   }
 
-  updateRole(id: string, role: User['role']): User {
-    const user = this.users.find((u) => u.id === id);
+  async updateRole(id: string, role: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    user.role = role;
-    return user;
+    return this.prisma.user.update({ where: { id }, data: { role } });
   }
 }

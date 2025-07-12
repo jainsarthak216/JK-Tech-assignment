@@ -1,39 +1,39 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
-
-interface IngestionStatus {
-  id: string;
-  status: 'pending' | 'in_progress' | 'completed';
-  startedAt: Date;
-  completedAt?: Date;
-}
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class IngestionService {
-  private readonly ingestions: IngestionStatus[] = [];
+  constructor(private readonly prisma: PrismaService) {}
 
-  triggerIngestion(): IngestionStatus {
-    const newIngestion: IngestionStatus = {
-      id: uuid(),
-      status: 'in_progress',
-      startedAt: new Date(),
-    };
-    this.ingestions.push(newIngestion);
+  async triggerIngestion() {
+    const ingestion = await this.prisma.ingestion.create({
+      data: {
+        id: uuid(),
+        status: 'in_progress',
+        startedAt: new Date(),
+      },
+    });
 
-    // Simulate async completion
     setTimeout(() => {
-      const i = this.ingestions.find((ing) => ing.id === newIngestion.id);
-      if (i) {
-        i.status = 'completed';
-        i.completedAt = new Date();
-      }
+      this.prisma.ingestion
+        .update({
+          where: { id: ingestion.id },
+          data: {
+            status: 'completed',
+            completedAt: new Date(),
+          },
+        })
+        .catch((err) => {
+          console.error('Error updating ingestion:', err);
+        });
     }, 3000);
 
-    return newIngestion;
+    return ingestion;
   }
 
-  getStatus(id: string): IngestionStatus {
-    const ingestion = this.ingestions.find((i) => i.id === id);
+  async getStatus(id: string) {
+    const ingestion = await this.prisma.ingestion.findUnique({ where: { id } });
     if (!ingestion) throw new NotFoundException('Ingestion not found');
     return ingestion;
   }

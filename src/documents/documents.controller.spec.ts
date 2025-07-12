@@ -30,26 +30,26 @@ describe('DocumentsController', () => {
     filename: 'file-123.pdf',
   } as Express.Multer.File;
 
-  it('should upload a file and return a document', () => {
-    const result = controller.uploadFile(mockFile);
+  it('should upload a file and return a document', async () => {
+    const result = await controller.uploadFile(mockFile);
     expect(result).toHaveProperty('id');
     expect(result.originalName).toBe('test.pdf');
   });
 
-  it('should return all documents', () => {
+  it('should return all documents', async () => {
     controller.uploadFile(mockFile);
-    const all = controller.getAll();
+    const all = await controller.getAll();
     expect(all.length).toBeGreaterThan(0);
   });
 
-  it('should return a document by ID', () => {
-    const doc = controller.uploadFile(mockFile);
-    const found = controller.getOne(doc.id);
+  it('should return a document by ID', async () => {
+    const doc = await controller.uploadFile(mockFile);
+    const found = await controller.getOne(doc.id);
     expect(found.id).toBe(doc.id);
   });
 
-  it('should return ingestion status for a document', () => {
-    const doc = controller.uploadFile(mockFile);
+  it('should return ingestion status for a document', async () => {
+    const doc = await controller.uploadFile(mockFile);
     const status = controller.getIngestionStatus(doc.id);
     expect(status).toHaveProperty('status');
   });

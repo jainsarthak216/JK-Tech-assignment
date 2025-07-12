@@ -1,47 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { v4 as uuid } from 'uuid';
-import { Express } from 'express';
+import { PrismaService } from '../../prisma/prisma.service';
 import { IngestionService } from '../ingestion/ingestion.service';
-
-export interface DocumentEntry {
-  id: string;
-  filename: string;
-  originalName: string;
-  uploadedAt: Date;
-  ingestionId: string;
-}
+import { v4 as uuid } from 'uuid';
+import { Document } from '@prisma/client';
 
 @Injectable()
 export class DocumentsService {
-  private readonly documents: DocumentEntry[] = [];
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ingestionService: IngestionService,
+  ) {}
 
-  constructor(private readonly ingestionService: IngestionService) {}
-
-  create(file: Express.Multer.File): DocumentEntry {
+  async create(file: Express.Multer.File): Promise<Document> {
     const ingestion = this.ingestionService.triggerIngestion();
 
-    const doc: DocumentEntry = {
-      id: uuid(),
-      filename: file.filename,
-      originalName: file.originalname,
-      uploadedAt: new Date(),
-      ingestionId: ingestion.id,
-    };
-    this.documents.push(doc);
-    return doc;
+    return await this.prisma.document.create({
+      data: {
+        id: uuid(),
+        filename: file.filename,
+        originalName: file.originalname,
+        ingestionId: (await ingestion).id,
+      },
+    });
   }
 
-  findAll(): DocumentEntry[] {
-    return this.documents;
+  async findAll(): Promise<Document[]> {
+    return this.prisma.document.findMany();
   }
 
-  findOne(id: string): DocumentEntry {
-    const doc = this.documents.find((d) => d.id === id);
+  async findOne(id: string): Promise<Document> {
+    const doc = await this.prisma.document.findUnique({ where: { id } });
     if (!doc) throw new NotFoundException('Document not found');
     return doc;
   }
 
-  getIngestionIdByDocumentId(id: string): string {
-    return this.findOne(id).ingestionId;
+  async getIngestionIdByDocumentId(id: string): Promise<string> {
+    const doc = await this.findOne(id);
+    return doc.ingestionId ?? '';
   }
 }

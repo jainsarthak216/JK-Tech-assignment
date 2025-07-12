@@ -32,9 +32,9 @@ describe('IngestionController', () => {
     expect(result.status).toBe('in_progress');
   });
 
-  it('should return ingestion status by ID', () => {
-    const { id } = service.triggerIngestion();
-    const status = controller.getIngestionStatus(id);
+  it('should return ingestion status by ID', async () => {
+    const { id } = await service.triggerIngestion();
+    const status = await controller.getIngestionStatus(id);
     expect(status.id).toBe(id);
   });
 });

@@ -38,8 +38,9 @@ export class DocumentsController {
   }
 
   @Get(':id/ingestion')
-  getIngestionStatus(@Param('id') id: string): any {
-    const ingestionId = this.documentsService.getIngestionIdByDocumentId(id);
+  async getIngestionStatus(@Param('id') id: string): Promise<any> {
+    const ingestionId =
+      await this.documentsService.getIngestionIdByDocumentId(id);
     return this.ingestionService.getStatus(ingestionId);
   }
 }

@@ -36,9 +36,25 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgres://nestuser:nestpass@postgres:5432/nestdb
-    entrypoint: ["npx", "prisma"]
+    entrypoint: ["sh", "-c"]
+    command: ["npx prisma generate"]
 
+  prisma-studio:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "5555:5555"
+    depends_on:
+      - postgres
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "npm install &&
+       npx prisma generate &&
+       npx prisma studio --port 5555"
+    environment:
+      DATABASE_URL: postgres://nestuser:nestpass@postgres:5432/nestdb
 
 volumes:
   pgdata:
-    driver: local

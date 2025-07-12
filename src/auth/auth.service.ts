@@ -1,58 +1,43 @@
 /* eslint-disable */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService, User } from '../users/users.service';
-import { RegisterDto } from './dto/register.dto/register.dto';
-import { LoginDto } from './dto/login.dto/login.dto';
-
+import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  async validateUser(
-    email: string,
-    password: string,
-  ): Promise<Omit<User, 'password'> | null> {
-    const user = this.usersService.findByEmail(email);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  async validateUser(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (user && (await bcrypt.compare(password, user.password))) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async register(dto: RegisterDto): Promise<{ access_token: string }> {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = this.usersService.create({
-      email: dto.email,
-      password: hashedPassword,
-      role: 'viewer',
-    });
-
+  login(user: any) {
     const payload = { email: user.email, sub: user.id, role: user.role };
-    const access_token = await this.jwtService.signAsync(payload);
-
-    return { access_token };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
-  async login(dto: LoginDto): Promise<{ access_token: string }> {
-    const user = this.usersService.findByEmail(dto.email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    const payload = { email: user.email, sub: user.id, role: user.role };
-    const access_token = await this.jwtService.signAsync(payload);
-    return { access_token };
+  async register(email: string, password: string, role: string = 'viewer') {
+    const hashedPassword = (await bcrypt.hash(password, 10)) as string;
+    console.log('Registering user:', email);
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role,
+      },
+    });
+    console.log('Created user:', user);
+    return { email: user.email, id: user.id, role: user.role };
   }
 }
