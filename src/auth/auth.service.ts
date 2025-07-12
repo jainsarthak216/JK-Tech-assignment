@@ -29,7 +29,6 @@ export class AuthService {
 
   async register(email: string, password: string, role: string = 'viewer') {
     const hashedPassword = (await bcrypt.hash(password, 10)) as string;
-    console.log('Registering user:', email);
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -37,7 +36,6 @@ export class AuthService {
         role,
       },
     });
-    console.log('Created user:', user);
     return { email: user.email, id: user.id, role: user.role };
   }
 }
