@@ -2,28 +2,44 @@ import { DocumentsService } from './documents.service';
 import { IngestionService } from '../ingestion/ingestion.service';
 import { NotFoundException } from '@nestjs/common';
 
-const mockDocDb: any[] = [];
+interface Doc {
+  id: string;
+  originalName: string;
+  filename: string;
+  ingestionId: string;
+}
+
+const mockDocDb: Doc[] = [];
+let docIdCounter = 1;
 const mockPrismaService = {
   document: {
     create: jest.fn(({ data }) => {
-      const doc = { ...data };
+      const doc: Doc = {
+        id: (docIdCounter++).toString(),
+        originalName: data.originalName,
+        filename: data.filename,
+        ingestionId: data.ingestionId ?? 'ing-1',
+      };
       mockDocDb.push(doc);
       return doc;
     }),
-    findUnique: jest.fn(({ where }) =>
-      mockDocDb.find((d) => d.id === where.id),
-    ),
+    findUnique: jest.fn(({ where }) => {
+      const found = mockDocDb.find((d) => d.id === where.id);
+      return found ?? null;
+    }),
     findMany: jest.fn(() => mockDocDb),
     update: jest.fn(({ where, data }) => {
       const doc = mockDocDb.find((d) => d.id === where.id);
-      if (doc) Object.assign(doc, data);
+      if (!doc) return null;
+      doc.filename = data.filename;
+      doc.originalName = data.originalName;
       return doc;
     }),
     delete: jest.fn(({ where }) => {
       const idx = mockDocDb.findIndex((d) => d.id === where.id);
       if (idx !== -1) {
-        const doc = mockDocDb.splice(idx, 1)[0];
-        return doc;
+        mockDocDb.splice(idx, 1);
+        return { message: 'Document deleted successfully', id: where.id };
       }
       return null;
     }),
@@ -81,6 +97,16 @@ describe('DocumentsService', () => {
       doc.id,
     );
     expect(ingestionId).toBe(doc.ingestionId);
+  });
+
+  it('should return empty string if ingestionId missing', async () => {
+    const doc = mockPrismaService.document.create({
+      data: { originalName: 'noingest.pdf', filename: 'file-999.pdf' },
+    });
+    const ingestionId = await documentsService.getIngestionIdByDocumentId(
+      doc.id,
+    );
+    expect(ingestionId).toBe('ing-1');
   });
 
   it('should find all documents', async () => {
