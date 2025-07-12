@@ -24,7 +24,6 @@ A backend service built using **NestJS**, **Prisma**, and **PostgreSQL**, suppor
 
 ```bash
 git clone https://github.com/jainsarthak216/JK-Tech-assignment
-cd nestjs-backend
 ````
 
 ---
