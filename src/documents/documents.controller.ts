@@ -41,12 +41,6 @@ export class DocumentsController {
     return await this.documentsService.findOne(id);
   }
 
-  @Post()
-  @Roles('editor', 'admin')
-  async createDocument(@UploadedFile() file: Express.Multer.File) {
-    return await this.documentsService.create(file);
-  }
-
   @Post(':id')
   @Roles('editor', 'admin')
   async updateDocument(
