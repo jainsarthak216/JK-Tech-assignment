@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:14
@@ -29,7 +27,7 @@ services:
       - /app/node_modules
 
   prisma:
-    image: node:18-alpine
+    image: node:20-alpine
     working_dir: /app
     volumes:
       - .:/app
@@ -41,7 +39,7 @@ services:
     command: ["npx prisma generate"]
 
   prisma-studio:
-    image: node:18-alpine
+    image: node:20-alpine
     working_dir: /app
     volumes:
       - .:/app
